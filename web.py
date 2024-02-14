@@ -3,7 +3,7 @@ from io import BytesIO
 import pandas as pd
 import re
 
-maximum_loop = 1
+maximum_loop = 5
 year = '2023'
 report_type = '사업보고서'
 
