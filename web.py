@@ -2,8 +2,9 @@ import requests
 from io import BytesIO
 import pandas as pd
 import re
+import time
 
-maximum_loop = 1
+maximum_loop = 1000
 year = '2023'
 report_type = '사업보고서'
 
@@ -50,11 +51,10 @@ def get_fs(rcp_no, dcm_no):
     table = BytesIO(resp.content)
 
     try:
-        fs_data = pd.read_excel(table, sheet_name='손익계산서', names=['a', 'b', 'c', 'd'], skiprows=6, na_values='')
-    except:
-        print("FS Exception")
-        fs_data = pd.read_excel(table, sheet_name='포괄손익계산서', name=['a', 'b', 'c', 'd'], skiprows=6, na_values='')
-        return '', 0
+        fs_data = pd.read_excel(table, sheet_name='포괄손익계산서', names=['a', 'b', 'c', 'd'], skiprows=6, na_values='')
+    except Exception as e:
+        print("FS Exception", e)
+        return 0, 0, 0, 0, 0, 0, s_url
     excel_position = 0
     
     for i in range (0, len(fs_data['a'].values.tolist())):
@@ -63,8 +63,12 @@ def get_fs(rcp_no, dcm_no):
             break
     if(excel_position != 0):
         amount1 = fs_data['b'][excel_position]
+        amount2 = fs_data['c'][excel_position]
+        amount3 = fs_data['d'][excel_position]
     else:
         amount1 = 0
+        amount2 = 0
+        amount3 = 0
 
     excel_position = 0
     for i in range (0, len(fs_data['a'].values.tolist())):
@@ -72,10 +76,14 @@ def get_fs(rcp_no, dcm_no):
             excel_position = i
             break
     if(excel_position != 0):
-        amount2 = fs_data['b'][excel_position]
+        amount4 = fs_data['b'][excel_position]
+        amount5 = fs_data['c'][excel_position]
+        amount6 = fs_data['d'][excel_position]
     else:
-        amount2 = 0
-    return amount1, amount2
+        amount4 = 0
+        amount5 = 0
+        amount6 = 0
+    return amount1, amount2, amount3, amount4, amount5, amount6, s_url
 
 def main_func():
     df = pd.read_excel('종목코드.xlsx', sheet_name='종목코드')
@@ -84,7 +92,7 @@ def main_func():
     data_list = df['COMP_CODE'].values.tolist()
     loop_count = 0
     for i in range(0, len(data_list)):
-        if(data['RCP_NO'][i] != ''):
+        if(data['RCP_NO'][i] != '' and data['URL'][i] == ''):
             s_code = data['COMP_CODE'][i]
             s_name = data['COMP_NAME'][i]
             print('loop = {}, count = {}/{}, code = {}, name = {}'.format(loop_count, str(i), len(data_list), str(s_code).zfill(6), s_name))
@@ -97,16 +105,30 @@ def main_func():
 
             print('get_fs')
             result_account = get_fs(rcp_no, dcm_no)
-            ebit = result_account[0]
-            retain_earning = result_account[1]
+            ebit1 = result_account[0]
+            ebit2 = result_account[1]
+            ebit3 = result_account[2]
+            retain_earning1 = result_account[3]
+            retain_earning2 = result_account[4]
+            retain_earning3 = result_account[5]
+            s_url = result_account[6]
 
             data['COMP_CODE'][i] = comp_code
             data['RCP_NO'][i] = rcp_no
             data['DCM_NO'][i] = dcm_no
-            data['EBIT'][i] = ebit
-            data['RE'][i] = retain_earning
+            data['EBIT1'][i] = ebit1
+            data['EBIT2'][i] = ebit2
+            data['EBIT3'][i] = ebit3
+            data['RE1'][i] = retain_earning1
+            data['RE2'][i] = retain_earning2
+            data['RE3'][i] = retain_earning3
+            data['URL'][i] = s_url
             data.to_excel('종목코드.xlsx', sheet_name='종목코드', index=False)
             loop_count = loop_count + 1
+        if(loop_count != 0 and loop_count%20 == 0):
+            print('sleep...')
+            time.sleep(60)
+            print('wake up!!!')
         if(loop_count > maximum_loop):
             break
     data.to_excel('종목코드_create.xlsx', sheet_name='종목코드', index=False)
