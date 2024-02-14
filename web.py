@@ -4,7 +4,7 @@ import pandas as pd
 import re
 import time
 
-maximum_loop = 1000
+maximum_loop = 10000
 year = '2023'
 report_type = '사업보고서'
 
@@ -20,7 +20,7 @@ def download_fs(url, company_name):
 
 def get_rcp_dcm_code(corp_code):
     url = 'https://opendart.fss.or.kr/api/list.xml?crtfc_key=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&corp_code={}&bgn_de={}0101&end_de={}1231&pblntf_ty=A&pblntf_detail_ty=A001&last_reprt_at=Y&page_no=1&page_count=10'.format(corp_code, year, year)
-    print('RCP URL : {}'.format(url))
+    #print('RCP URL : {}'.format(url))
     resp = requests.get(url)
     webpage = resp.content.decode('UTF-8')
     rcp_no_list = re.findall(r'<rcept_no>(.*?)</rcept_no>', webpage)
@@ -46,7 +46,7 @@ def get_rcp_dcm_code(corp_code):
 def get_fs(rcp_no, dcm_no):
     user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36 Edg/92.0.902.67'
     s_url = 'http://dart.fss.or.kr/pdf/download/excel.do?rcp_no={}&dcm_no={}&lang=ko'.format(rcp_no, dcm_no)
-    print('FS URL : {}'.format(s_url))
+    #print('FS URL : {}'.format(s_url))
     resp = requests.get(s_url, headers = {"user-agent": user_agent})
     table = BytesIO(resp.content)
 
@@ -97,13 +97,13 @@ def main_func():
             s_name = data['COMP_NAME'][i]
             print('loop = {}, count = {}/{}, code = {}, name = {}'.format(loop_count, str(i), len(data_list), str(s_code).zfill(6), s_name))
             
-            print('get_rcp_dcm_code')
+            #print('get_rcp_dcm_code')
             result_code = get_rcp_dcm_code(str(s_code).zfill(6))
             comp_code = str(s_code).zfill(6)
             rcp_no = result_code[0]
             dcm_no = result_code[1]
 
-            print('get_fs')
+            #print('get_fs')
             result_account = get_fs(rcp_no, dcm_no)
             ebit1 = result_account[0]
             ebit2 = result_account[1]
@@ -125,10 +125,12 @@ def main_func():
             data['URL'][i] = s_url
             data.to_excel('종목코드.xlsx', sheet_name='종목코드', index=False)
             loop_count = loop_count + 1
+        
         if(loop_count != 0 and loop_count%20 == 0):
-            print('sleep...')
-            time.sleep(60)
-            print('wake up!!!')
+            for i in range(60):
+                print(f"Sleeping for {i+1} seconds...")
+                time.sleep(1)
+       
         if(loop_count > maximum_loop):
             break
     data.to_excel('종목코드_create.xlsx', sheet_name='종목코드', index=False)
