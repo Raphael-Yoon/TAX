@@ -7,6 +7,7 @@ import time
 maximum_loop = 10000
 year = '2023'
 report_type = '사업보고서'
+s_sheet_name = '포괄손익계산서'
 
 def download_fs(url, company_name):
     user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36 Edg/92.0.902.67'
@@ -51,10 +52,10 @@ def get_fs(rcp_no, dcm_no):
     table = BytesIO(resp.content)
 
     try:
-        fs_data = pd.read_excel(table, sheet_name='포괄손익계산서', names=['a', 'b', 'c', 'd'], skiprows=6, na_values='')
+        fs_data = pd.read_excel(table, sheet_name=s_sheet_name, names=['a', 'b', 'c', 'd'], skiprows=6, na_values='')
     except Exception as e:
         print("FS Exception", e)
-        return 0, 0, 0, 0, 0, 0, s_url
+        return "", 0, 0, 0, 0, 0, s_url
     excel_position = 0
     
     for i in range (0, len(fs_data['a'].values.tolist())):
@@ -92,7 +93,7 @@ def main_func():
     data_list = df['COMP_CODE'].values.tolist()
     loop_count = 0
     for i in range(0, len(data_list)):
-        if(data['RCP_NO'][i] != '' and data['URL'][i] == ''):
+        if(data['RCP_NO'][i] != '' and data['URL'][i] == '' and data['EBIT1'][i] == ''):
             s_code = data['COMP_CODE'][i]
             s_name = data['COMP_NAME'][i]
             print('loop = {}, count = {}/{}, code = {}, name = {}'.format(loop_count, str(i), len(data_list), str(s_code).zfill(6), s_name))
@@ -128,7 +129,7 @@ def main_func():
         
         if(loop_count != 0 and loop_count%20 == 0):
             for i in range(60):
-                print("Sleeping for {i+1} seconds...")
+                print(f"Sleeping for {i+1} seconds...")
                 time.sleep(1)
        
         if(loop_count > maximum_loop):
