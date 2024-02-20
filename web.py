@@ -7,7 +7,7 @@ import time
 maximum_loop = 10000
 year = '2023'
 report_type = '사업보고서'
-s_sheet_name = '포괄손익계산서'
+s_sheet_name = '손익계산서'
 
 def download_fs(url, company_name):
     user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36 Edg/92.0.902.67'
@@ -55,7 +55,7 @@ def get_fs(rcp_no, dcm_no):
         fs_data = pd.read_excel(table, sheet_name=s_sheet_name, names=['a', 'b', 'c', 'd'], skiprows=6, na_values='')
     except Exception as e:
         print("FS Exception", e)
-        return "", 0, 0, 0, 0, 0, s_url
+        return "", 0, 0, 0, 0, 0, s_url, e
     excel_position = 0
     
     for i in range (0, len(fs_data['a'].values.tolist())):
@@ -84,16 +84,16 @@ def get_fs(rcp_no, dcm_no):
         amount4 = 0
         amount5 = 0
         amount6 = 0
-    return amount1, amount2, amount3, amount4, amount5, amount6, s_url
+    return amount1, amount2, amount3, amount4, amount5, amount6, s_url, ''
 
 def main_func():
-    df = pd.read_excel('종목코드.xlsx', sheet_name='종목코드')
+    df = pd.read_excel('종목코드.xlsx', sheet_name=s_sheet_name)
     data = df.fillna('')
 
     data_list = df['COMP_CODE'].values.tolist()
     loop_count = 0
     for i in range(0, len(data_list)):
-        if(data['RCP_NO'][i] != '' and data['URL'][i] == '' and data['EBIT1'][i] == ''):
+        if(data['RCP_NO'][i] != '' and data['URL'][i] == '' and data['EBIT1'][i] == ""):
             s_code = data['COMP_CODE'][i]
             s_name = data['COMP_NAME'][i]
             print('loop = {}, count = {}/{}, code = {}, name = {}'.format(loop_count, str(i), len(data_list), str(s_code).zfill(6), s_name))
@@ -113,6 +113,7 @@ def main_func():
             retain_earning2 = result_account[4]
             retain_earning3 = result_account[5]
             s_url = result_account[6]
+            s_error = result_account[7]
 
             data['COMP_CODE'][i] = comp_code
             data['RCP_NO'][i] = rcp_no
@@ -124,7 +125,8 @@ def main_func():
             data['RE2'][i] = retain_earning2
             data['RE3'][i] = retain_earning3
             data['URL'][i] = s_url
-            data.to_excel('종목코드.xlsx', sheet_name='종목코드', index=False)
+            data['EXCEPTION'][i] = s_error
+            data.to_excel('종목코드.xlsx', sheet_name=s_sheet_name, index=False)
             loop_count = loop_count + 1
         
         if(loop_count != 0 and loop_count%20 == 0):
@@ -134,7 +136,7 @@ def main_func():
        
         if(loop_count > maximum_loop):
             break
-    data.to_excel('종목코드_create.xlsx', sheet_name='종목코드', index=False)
+    data.to_excel('종목코드_create.xlsx', sheet_name=s_sheet_name, index=False)
 
 print("Start")
 main_func()
