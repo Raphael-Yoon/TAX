@@ -1,0 +1,7 @@
+# etc
+*.db
+*.env
+*.pickle
+credentials.json
+*.pyc
+doc/
