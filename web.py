@@ -7,7 +7,7 @@ import time
 maximum_loop = 10000
 year = '2023'
 report_type = '사업보고서'
-s_sheet_name = '손익계산서'
+#s_sheet_name = '포괄손익계산서'
 
 def download_fs(url, company_name):
     user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36 Edg/92.0.902.67'
@@ -44,7 +44,7 @@ def get_rcp_dcm_code(corp_code):
             dcm_no = int(url[1])
     return rcp_no, dcm_no
 
-def get_fs(rcp_no, dcm_no):
+def get_fs(rcp_no, dcm_no, l_sheet_name):
     user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.131 Safari/537.36 Edg/92.0.902.67'
     s_url = 'http://dart.fss.or.kr/pdf/download/excel.do?rcp_no={}&dcm_no={}&lang=ko'.format(rcp_no, dcm_no)
     #print('FS URL : {}'.format(s_url))
@@ -52,7 +52,7 @@ def get_fs(rcp_no, dcm_no):
     table = BytesIO(resp.content)
 
     try:
-        fs_data = pd.read_excel(table, sheet_name=s_sheet_name, names=['a', 'b', 'c', 'd'], skiprows=6, na_values='')
+        fs_data = pd.read_excel(table, sheet_name=l_sheet_name, names=['a', 'b', 'c', 'd'], skiprows=6, na_values='')
     except Exception as e:
         print("FS Exception", e)
         return "", 0, 0, 0, 0, 0, s_url, e
@@ -86,14 +86,14 @@ def get_fs(rcp_no, dcm_no):
         amount6 = 0
     return amount1, amount2, amount3, amount4, amount5, amount6, s_url, ''
 
-def main_func():
-    df = pd.read_excel('종목코드.xlsx', sheet_name=s_sheet_name)
+def main_func(l_sheet_name):
+    df = pd.read_excel('종목코드.xlsx', sheet_name=l_sheet_name)
     data = df.fillna('')
 
     data_list = df['COMP_CODE'].values.tolist()
     loop_count = 0
     for i in range(0, len(data_list)):
-        if(data['RCP_NO'][i] != '' and data['URL'][i] == '' and data['EBIT1'][i] == ""):
+        if(data['RCP_NO'][i] != '' and data['URL'][i] != '' and data['EBIT1'][i] == ""):
             s_code = data['COMP_CODE'][i]
             s_name = data['COMP_NAME'][i]
             print('loop = {}, count = {}/{}, code = {}, name = {}'.format(loop_count, str(i), len(data_list), str(s_code).zfill(6), s_name))
@@ -105,7 +105,7 @@ def main_func():
             dcm_no = result_code[1]
 
             #print('get_fs')
-            result_account = get_fs(rcp_no, dcm_no)
+            result_account = get_fs(rcp_no, dcm_no, l_sheet_name)
             ebit1 = result_account[0]
             ebit2 = result_account[1]
             ebit3 = result_account[2]
@@ -126,7 +126,7 @@ def main_func():
             data['RE3'][i] = retain_earning3
             data['URL'][i] = s_url
             data['EXCEPTION'][i] = s_error
-            data.to_excel('종목코드.xlsx', sheet_name=s_sheet_name, index=False)
+            data.to_excel('종목코드.xlsx', sheet_name=l_sheet_name, index=False)
             loop_count = loop_count + 1
         
         if(loop_count != 0 and loop_count%20 == 0):
@@ -136,8 +136,8 @@ def main_func():
        
         if(loop_count > maximum_loop):
             break
-    data.to_excel('종목코드_create.xlsx', sheet_name=s_sheet_name, index=False)
+    data.to_excel('종목코드_create.xlsx', sheet_name=l_sheet_name, index=False)
 
 print("Start")
-main_func()
+main_func('손익계산서')
 print("End")
