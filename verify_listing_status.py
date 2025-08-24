@@ -47,14 +47,14 @@ def verify_actual_listing():
                 
                 # 기본적인 주식 정보가 있는지 확인
                 if info and 'symbol' in info and info.get('regularMarketPrice'):
-                    print(f"✅ {stock_code}: {company_name} - 실제 상장")
+                    print(f"[O] {stock_code}: {company_name} - 실제 상장")
                     actual_listed += 1
                 else:
-                    print(f"❌ {stock_code}: {company_name} - 상장 확인 불가")
+                    print(f"[X] {stock_code}: {company_name} - 상장 확인 불가")
                     not_listed += 1
                     
             except Exception as e:
-                print(f"⚠️  {stock_code}: {company_name} - 조회 실패")
+                print(f"[!] {stock_code}: {company_name} - 조회 실패")
                 not_listed += 1
             
             time.sleep(0.2)  # API 제한
@@ -152,6 +152,6 @@ if __name__ == "__main__":
         print(f"\n최종 결론:")
         print(f"엄격한 필터링 후 추정 코스피 상장사: {final_count}개")
         if 700 <= final_count <= 1000:
-            print("✅ 실제 코스피 상장사 수와 비슷한 수준입니다.")
+            print("[SUCCESS] 실제 코스피 상장사 수와 비슷한 수준입니다.")
         else:
-            print("⚠️ 여전히 실제와 차이가 있을 수 있습니다.")
+            print("[WARNING] 여전히 실제와 차이가 있을 수 있습니다.")
